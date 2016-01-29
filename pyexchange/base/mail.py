@@ -38,7 +38,11 @@ class BaseExchangeMailMessage(object):
     return self.html_body or self.text_body or None
 
   def validate(self):
-    pass
+    if not self.recipients:
+      raise Exception("recipients is empty")
+    
+    if self.recipients and not isinstance(self.recipients, list):
+      raise TypeError("recipients must be of type list")
 
   def _update_properties(self, properties):
     self._track_dirty_attributes = False
