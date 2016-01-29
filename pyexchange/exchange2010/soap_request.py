@@ -59,6 +59,26 @@ def resource_node(element, resources):
   return element
 
 
+def recipient_node(element, recipients):
+    """
+    Helper function to generate a ToRecipients node from email addresses
+
+    <t:ToRecipients>
+        <t:Mailbox>
+            <t:EmailAddress>{{ recipient }}</t:EmailAddress>
+        </t:Mailbox>
+    </t:ToRecipients>
+    """
+    for recipient in recipients:
+      element.append(
+        T.Mailbox(
+          T.EmailAddress(recipient)
+        )
+      )
+
+    return element
+
+
 def delete_field(field_uri):
   """
       Helper function to request deletion of a field. This is necessary when you want to overwrite values instead of
@@ -625,3 +645,55 @@ def update_item(event, updated_attributes, calendar_item_update_operation_type):
       )
 
   return root
+
+
+def new_mail_message(message):
+    """
+    <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+      <soap:Header>
+        <t:RequestServerVersion Version="Exchange2010" />
+      </soap:Header>
+      <soap:Body>
+        <m:CreateItem MessageDisposition="SendAndSaveCopy">
+          <m:SavedItemFolderId>
+            <t:DistinguishedFolderId Id="sentitems" />
+          </m:SavedItemFolderId>
+          <m:Items>
+            <t:Message>
+              <t:Subject>{{ message.subject }}</t:Subject>
+              <t:Body BodyType="HTML">{{ message.body }}</t:Body>
+              <t:ToRecipients>
+                {% for recipient in message.recipients %}
+                <t:Mailbox>
+                  <t:EmailAddress>{{ recipient }}</t:EmailAddress>
+                </t:Mailbox>
+                {% endfor %}
+              </t:ToRecipients>
+            </t:Message>
+          </m:Items>
+        </m:CreateItem>
+      </soap:Body>
+    </soap:Envelope>
+    :param message:
+    :return:
+    """
+    id = T.DistinguishedFolderId(Id=message.mail_id)
+
+    root = M.CreateItem(
+      M.SavedItemFolderId(id),
+        M.Items(
+          T.Message(
+            T.Subject(message.subject),
+            T.Body(message.body or u'', BodyType="HTML"),
+          )
+        ),
+      MessageDisposition="SendAndSaveCopy"
+    )
+
+    message_node = root.xpath(u'/m:CreateItem/m:Items/t:Message', namespaces=NAMESPACES)[0]
+
+    message_node.append(recipient_node(element=T.ToRecipients(), recipients=message.recipients))
+    return root

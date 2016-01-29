@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software?distributed 
 import logging
 from ..base.calendar import BaseExchangeCalendarEvent, BaseExchangeCalendarService, ExchangeEventOrganizer, ExchangeEventResponse
 from ..base.folder import BaseExchangeFolder, BaseExchangeFolderService
+from ..base.mail import BaseExchangeMailMessage, BaseExchangeMailService
 from ..base.soap import ExchangeServiceSOAP
 from ..exceptions import FailedExchangeException, ExchangeStaleChangeKeyException, ExchangeItemNotFoundException, ExchangeInternalServerTransientErrorException, ExchangeIrresolvableConflictException, InvalidEventType
 from ..compat import BASESTRING_TYPES
@@ -27,8 +28,8 @@ class Exchange2010Service(ExchangeServiceSOAP):
   def calendar(self, id="calendar"):
     return Exchange2010CalendarService(service=self, calendar_id=id)
 
-  def mail(self):
-    raise NotImplementedError("Sorry - nothin' here. Feel like adding it? :)")
+  def mail(self, id="sentitems"):
+    return Exchange2010MailService(service=self, mail_id=id)
 
   def contacts(self):
     raise NotImplementedError("Sorry - nothin' here. Feel like adding it? :)")
@@ -914,3 +915,31 @@ class Exchange2010Folder(BaseExchangeFolder):
       return id_element.get(u"Id", None), id_element.get(u"ChangeKey", None)
     else:
       return None, None
+
+
+class Exchange2010MailService(BaseExchangeMailService):
+
+  def new_message(self, **kwargs):
+    return Exchange2010MailMessage(service=self.service, mail_id=self.mail_id, **kwargs)
+
+
+class Exchange2010MailMessage(BaseExchangeMailMessage):
+
+  def send(self):
+    """
+      Sends an email in Exchange. ::
+
+      message = service.mail().new_message(
+        recipients=['lilei@example.com', 'lily@example.com'],
+        subject=u"hi",
+        html_body = u"testing",
+        )
+      message.send()
+
+    """
+    self.validate()
+    body = soap_request.new_mail_message(self)
+
+    response_xml = self.service.send(body)
+
+    return self

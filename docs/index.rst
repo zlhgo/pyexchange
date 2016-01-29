@@ -236,6 +236,19 @@ To create a new exchange calendar, do::
 
 By creating a folder of the type "CalendarFolder", you are creating a new calendar.
 
+Sending an email
+`````````````````
+
+To send an email, simply do::
+
+    message = service.mail().new_message(
+        recipients=['lilei@example.com', 'lily@example.com'],
+        subject=u"hi",
+        html_body = u"testing",
+        )
+    message.send()
+    
+
 Other tips and tricks
 `````````````````````
 
