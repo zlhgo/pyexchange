@@ -5,7 +5,7 @@ PyExchange
 
 PyExchange is a library for Microsoft Exchange.
 
-It's incomplete at the moment - it only handles calendar events. We've open sourced it because we found it useful and hope others will, too.
+It's incomplete at the moment - it only handles calendar events and sending email. We've open sourced it because we found it useful and hope others will, too.
 
 If you're interested, please see the CONTRIBUTING notes in the repo for hints on where to get started.
 
